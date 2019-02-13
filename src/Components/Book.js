@@ -7,10 +7,10 @@ const Book = (props) => {
             <div className="book">
                 <div className="book-top">
                 <div className="book-cover" style={props.style}></div>
-                    <BookShelf updateShelf={(e) => props.updateShelf(e,props.bookName)}/>
+                    <BookShelf />
                 </div>
-                <div className="book-title">{props.bookName}</div>
-                <div className="book-authors">{props.bookWriter}</div>
+                <div className="book-title">{props.bookTitle}</div>
+                <div className="book-authors">{props.bookAuthors}</div>
             </div>
             )
     }

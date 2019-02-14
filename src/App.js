@@ -20,14 +20,16 @@ class BooksApp extends React.Component {
     );
   }
 
-  updateShelf = function(event, book) {
-    console.log(Object.keys(this.state.currentlyReading).map(function (atribute){ 
-    console.log(atribute)}));
-    var bookx = event.target.options[event.target.selectedIndex].value
+  updateShelf = function(event,book) {
+    //console.log(Object.keys(this.state.currentlyReading).map(function (atribute){
+    console.log(book); 
+    console.log(event.target.options[event.target.selectedIndex].value);
+    BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
+    /* var bookx = event.target.options[event.target.selectedIndex].value
     var y = <Book updateShelf={(e,bookName) => (this.updateShelf(e,bookName))} bookWriter= {'Orson Scott Card'} bookName={'Ender\'s Game'}style={{ width: 128, height: 188, backgroundImage: 'url("http://books.google.com/books/content?id=yDtCuFHXbAYC&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE72RRiTR6U5OUg3IY_LpHTL2NztVWAuZYNFE8dUuC0VlYabeyegLzpAnDPeWxE6RHi0C2ehrR9Gv20LH2dtjpbcUcs8YnH5VCCAH0Y2ICaKOTvrZTCObQbsfp4UbDqQyGISCZfGN&source=gbs_api")' }}/>
     var obj = {}
     obj[bookx] = [y,y]
-    this.setState(obj)
+    this.setState(obj) */
   }
 
   updateQuery = function(newQuery){
@@ -38,7 +40,7 @@ class BooksApp extends React.Component {
         this.setState({ queryResult : []})
         books && books.length && books.map((book) => {
           this.setState((state) => { 
-            return {queryResult : state.queryResult.concat([<Book bookWriter={book.authors} bookName={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.smallThumbnail})`}}/>])}
+            return {queryResult : state.queryResult.concat([<Book updateShelf={(e) => (this.updateShelf(e,book))} bookWriter={book.authors} bookName={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.smallThumbnail})`}}/>])}
           }) 
         })
       }else{
@@ -46,6 +48,14 @@ class BooksApp extends React.Component {
         return this.setState(() => ({ queryResult : []}))
       }
     })
+  }
+
+  updateAll = function(){
+    BooksAPI.getAll().then((books) =>
+      books.map((book) => 
+        this.setState((state) => ({ books : state.books.concat([book])}))
+      )
+    );
   }
 
   render() {
@@ -56,7 +66,7 @@ class BooksApp extends React.Component {
           <div className="search-books">
             <div className="search-books-bar">
               <Link to='/'> 
-                <button className="close-search">Close</button> 
+                <button className="close-search" onClick={this.updateAll}>Close</button> 
               </Link>
               <div className="search-books-input-wrapper">
                 <input 
@@ -64,7 +74,6 @@ class BooksApp extends React.Component {
                   placeholder="Search by title or author"
                   onChange= {(event) => this.updateQuery(event.target.value)}
                   />
-                  
               </div>
               
             </div>
@@ -94,7 +103,7 @@ class BooksApp extends React.Component {
                   <ol className="books-grid">
                     {this.state.books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
                           <li key={book.id}>
-                            <Book bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
+                            <Book bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>
                         )) }
                     </ol>
@@ -106,7 +115,7 @@ class BooksApp extends React.Component {
                   <ol className="books-grid">
                     {this.state.books.filter((book) => (book.shelf==='wantToRead')).map((book) => (
                           <li key={book.id}>
-                            <Book bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
+                            <Book bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>
                         )) }
                     </ol>
@@ -118,7 +127,7 @@ class BooksApp extends React.Component {
                   <ol className="books-grid">
                     {this.state.books.filter((book) => (book.shelf==='read')).map((book) => (
                           <li key={book.id}>
-                            <Book bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
+                            <Book bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>
                         )) }
                     </ol>

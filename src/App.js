@@ -13,6 +13,7 @@ class BooksApp extends React.Component {
   }
   
   componentWillMount(){
+    console.log('mount')
     this.catchAllBooks()
   }
 
@@ -26,15 +27,16 @@ class BooksApp extends React.Component {
 
   updateShelf = function(event,book) {
     //console.log(Object.keys(this.state.currentlyReading).map(function (atribute){
+    book.shelf = event.target.options[event.target.selectedIndex].value;
     console.log(book); 
     console.log(event.target.options[event.target.selectedIndex].value);
     BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
     /* this.setState({books : []})
     this.catchAllBooks() */
     if (this.state.books.includes(book)){
-      console.log(book)
+      this.setState({ books : this.state.books})
     }else{
-      console.log('none')
+      console.log(this.state.books.concat([book]))
       this.setState((state) => ({ books : state.books.concat([book])}))
     }
     /* var bookx = event.target.options[event.target.selectedIndex].value
@@ -42,6 +44,10 @@ class BooksApp extends React.Component {
     var obj = {}
     obj[bookx] = [y,y]
     this.setState(obj) */
+  }
+
+  showState = function(){
+    return console.log(this.state.books)
   }
 
   updateQuery = function(newQuery){
@@ -70,6 +76,7 @@ class BooksApp extends React.Component {
   }
 
   render() {
+    let {books} = this.state; 
     
     return (
       <div className="app">
@@ -77,7 +84,7 @@ class BooksApp extends React.Component {
           <div className="search-books">
             <div className="search-books-bar">
               <Link to='/'> 
-                <button className="close-search" onClick={this.updateAll}>Close</button> 
+                <button className="close-search">Close</button> 
               </Link>
               <div className="search-books-input-wrapper">
                 <input 
@@ -112,7 +119,7 @@ class BooksApp extends React.Component {
                   <h2 className="bookshelf-title">Currently Reading</h2>
                   <div className="bookshelf-books">
                   <ol className="books-grid">
-                    {this.state.books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
+                    {books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
                           <li key={book.id}>
                             <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>
@@ -124,7 +131,7 @@ class BooksApp extends React.Component {
                   <h2 className="bookshelf-title">Want to Read</h2>
                   <div className="bookshelf-books">
                   <ol className="books-grid">
-                    {this.state.books.filter((book) => (book.shelf==='wantToRead')).map((book) => (
+                    {books.filter((book) => (book.shelf==='wantToRead')).map((book) => (
                           <li key={book.id}>
                             <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>
@@ -136,7 +143,7 @@ class BooksApp extends React.Component {
                   <h2 className="bookshelf-title">Read</h2>
                   <div className="bookshelf-books">
                   <ol className="books-grid">
-                    {this.state.books.filter((book) => (book.shelf==='read')).map((book) => (
+                    {books.filter((book) => (book.shelf==='read')).map((book) => (
                           <li key={book.id}>
                             <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
                           </li>

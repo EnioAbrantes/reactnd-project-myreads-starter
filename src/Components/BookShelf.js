@@ -5,6 +5,7 @@ class BookShelf extends React.Component {
     updateSelect = function(event,shelf){
         shelf ? event.target.value = shelf : event.target.value = 'none'
     }
+    
     render(){
         return(
         <div className="book-shelf-changer" >

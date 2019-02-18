@@ -13,7 +13,6 @@ class BooksApp extends React.Component {
   }
   
   componentWillMount(){
-    console.log('mount')
     this.catchAllBooks()
   }
 
@@ -27,10 +26,20 @@ class BooksApp extends React.Component {
 
   updateShelf = function(event,book) {
     //console.log(Object.keys(this.state.currentlyReading).map(function (atribute){
-    book.shelf = event.target.options[event.target.selectedIndex].value;
+    
     console.log(book); 
     console.log(event.target.options[event.target.selectedIndex].value);
-    BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
+    this.state.books.map((b) => {
+      if(b.id === book.id){
+        b.shelf = 'none';
+        BooksAPI.update(b, 'none');
+      }
+    })
+
+      book.shelf = event.target.options[event.target.selectedIndex].value;
+      BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
+    
+    
     /* this.setState({books : []})
     this.catchAllBooks() */
     if (this.state.books.includes(book)){
@@ -51,13 +60,20 @@ class BooksApp extends React.Component {
   }
 
   updateQuery = function(newQuery){
+    let shelf = 'none'
     BooksAPI.search(newQuery).then((books) => {
       if(books){
         this.setState({ queryResult : []})
         books && books.length && books.map((book) => {
+          this.state.books.map((b) => {
+            if(b.id === book.id){
+             return shelf = b.shelf
+            }
+          })
           this.setState((state) => { 
-            return {queryResult : state.queryResult.concat([<Book bookShelf={book.shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.smallThumbnail})`}}/>])}
+            return {queryResult : state.queryResult.concat([<Book bookShelf={shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.smallThumbnail})`}}/>])}
           }) 
+          return shelf = 'none'
         })
       }else{
         console.log(this.state.books)

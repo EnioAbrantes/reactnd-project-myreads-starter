@@ -27,32 +27,30 @@ class BooksApp extends React.Component {
   updateShelf = function(event,book) {
     //console.log(Object.keys(this.state.currentlyReading).map(function (atribute){
     
-    console.log(book); 
-    console.log(event.target.options[event.target.selectedIndex].value);
+    var livro;
     this.state.books.map((b) => {
       if(b.id === book.id){
-        b.shelf = 'none';
-        BooksAPI.update(b, 'none');
+        book = b;
+        /* b.shelf = 'none';
+        BooksAPI.update(b, 'none'); */
       }
-    })
+    }) 
 
+    if(livro){
+      livro.shelf = event.target.options[event.target.selectedIndex].value;
+      BooksAPI.update(livro, event.target.options[event.target.selectedIndex].value);
+    }else{
       book.shelf = event.target.options[event.target.selectedIndex].value;
       BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
     
+    }
     
-    /* this.setState({books : []})
-    this.catchAllBooks() */
     if (this.state.books.includes(book)){
       this.setState({ books : this.state.books})
     }else{
       console.log(this.state.books.concat([book]))
       this.setState((state) => ({ books : state.books.concat([book])}))
     }
-    /* var bookx = event.target.options[event.target.selectedIndex].value
-    var y = <Book updateShelf={(e,bookName) => (this.updateShelf(e,bookName))} bookWriter= {'Orson Scott Card'} bookName={'Ender\'s Game'}style={{ width: 128, height: 188, backgroundImage: 'url("http://books.google.com/books/content?id=yDtCuFHXbAYC&printsec=frontcover&img=1&zoom=1&imgtk=AFLRE72RRiTR6U5OUg3IY_LpHTL2NztVWAuZYNFE8dUuC0VlYabeyegLzpAnDPeWxE6RHi0C2ehrR9Gv20LH2dtjpbcUcs8YnH5VCCAH0Y2ICaKOTvrZTCObQbsfp4UbDqQyGISCZfGN&source=gbs_api")' }}/>
-    var obj = {}
-    obj[bookx] = [y,y]
-    this.setState(obj) */
   }
 
   showState = function(){
@@ -65,14 +63,19 @@ class BooksApp extends React.Component {
       if(books){
         this.setState({ queryResult : []})
         books && books.length && books.map((book) => {
+          console.log(books)
           this.state.books.map((b) => {
             if(b.id === book.id){
              return shelf = b.shelf
             }
           })
-          this.setState((state) => { 
-            return {queryResult : state.queryResult.concat([<Book bookShelf={shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.smallThumbnail})`}}/>])}
-          }) 
+          // Bug found when put l on the input, there is no image on the book
+          if(book.imageLinks){
+            this.setState((state) => { 
+              return {queryResult : state.queryResult.concat([<Book bookShelf={shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.thumbnail})`}}/>])}
+            }) 
+          }
+          
           return shelf = 'none'
         })
       }else{
@@ -170,7 +173,7 @@ class BooksApp extends React.Component {
               </div>
             </div>
 
-            <Link to='/search' className="open-search">
+            <Link to='/search' onClick={this.updateQuery} className="open-search">
               <button>Add a book</button>
             </Link>
 

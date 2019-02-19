@@ -5,6 +5,11 @@ import { Link } from 'react-router-dom'
 import { Route } from 'react-router-dom'
 import Book from './Components/Book'
 
+var ShelfEnum = Object.freeze({
+  'Currently Reading' : 'currentlyReading',
+  'Want to Read': 'wantToRead',
+  'Read' : 'read'})
+
 class BooksApp extends React.Component {
 
   state = {
@@ -13,10 +18,6 @@ class BooksApp extends React.Component {
   }
   
   componentWillMount(){
-    this.catchAllBooks()
-  }
-
-  catchAllBooks = function (){
     BooksAPI.getAll().then((books) =>
       books.map((book) => 
         this.setState((state) => ({ books : state.books.concat([book])}))
@@ -25,77 +26,46 @@ class BooksApp extends React.Component {
   }
 
   updateShelf = function(event,book) {
-    //console.log(Object.keys(this.state.currentlyReading).map(function (atribute){
-    
-    var livro;
+    // sometimes the book does't match with includes, because this we need to check according the ids.
     this.state.books.map((b) => {
       if(b.id === book.id){
         book = b;
-        /* b.shelf = 'none';
-        BooksAPI.update(b, 'none'); */
       }
     }) 
-
-    if(livro){
-      livro.shelf = event.target.options[event.target.selectedIndex].value;
-      BooksAPI.update(livro, event.target.options[event.target.selectedIndex].value);
-    }else{
-      book.shelf = event.target.options[event.target.selectedIndex].value;
-      BooksAPI.update(book, event.target.options[event.target.selectedIndex].value);
-    
-    }
-    
-    if (this.state.books.includes(book)){
-      this.setState({ books : this.state.books})
-    }else{
-      console.log(this.state.books.concat([book]))
-      this.setState((state) => ({ books : state.books.concat([book])}))
-    }
-  }
-
-  showState = function(){
-    return console.log(this.state.books)
+    book.shelf = event.target.options[event.target.selectedIndex].value;
+    BooksAPI.update(book, book.shelf);
+    this.state.books.includes(book)? this.setState({ books : this.state.books}) : this.setState((state) => ({ books : state.books.concat([book])}))
   }
 
   updateQuery = function(newQuery){
-    let shelf = 'none'
+    let shelf = 'none';
+
     BooksAPI.search(newQuery).then((books) => {
       if(books){
         this.setState({ queryResult : []})
         books && books.length && books.map((book) => {
-          console.log(books)
           this.state.books.map((b) => {
             if(b.id === book.id){
              return shelf = b.shelf
             }
           })
-          // Bug found when put l on the input, there is no image on the book
+          // Bug on the API found when type 'l' on the input, there is no image on the book
           if(book.imageLinks){
             this.setState((state) => { 
               return {queryResult : state.queryResult.concat([<Book bookShelf={shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.thumbnail})`}}/>])}
             }) 
           }
-          
-          return shelf = 'none'
+          shelf = 'none';
         })
       }else{
-        console.log(this.state.books)
         return this.setState(() => ({ queryResult : []}))
       }
     })
   }
 
-  updateAll = function(){
-    BooksAPI.getAll().then((books) =>
-      books.map((book) => 
-        console.log(book)
-        //this.setState((state) => ({ books : state.books.concat([book])}))
-      )
-    );
-  }
-
   render() {
     let {books} = this.state; 
+    let {queryResult} = this.state;
     
     return (
       <div className="app">
@@ -117,8 +87,8 @@ class BooksApp extends React.Component {
             <div className="search-books-results">
               <div className="bookshelf-books">
                 <ol className="books-grid">
-                  {this.state.queryResult.filter((book) => (
-                    <li key={book.props.bookName}>
+                  {queryResult.filter((book) => (
+                    <li key={book.id}>
                       {book}
                     </li>
                   )) }
@@ -137,12 +107,12 @@ class BooksApp extends React.Component {
                 <div className="bookshelf">
                   <h2 className="bookshelf-title">Currently Reading</h2>
                   <div className="bookshelf-books">
-                  <ol className="books-grid">
-                    {books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
-                          <li key={book.id}>
-                            <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
-                          </li>
-                        )) }
+                    <ol className="books-grid">
+                      {books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
+                            <li key={book.id}>
+                              <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
+                            </li>
+                          )) }
                     </ol>
                   </div>
                 </div>

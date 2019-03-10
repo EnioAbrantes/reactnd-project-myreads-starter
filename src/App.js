@@ -3,59 +3,67 @@ import * as BooksAPI from './BooksAPI'
 import './App.css'
 import { Link } from 'react-router-dom'
 import { Route } from 'react-router-dom'
-import Book from './Components/Book'
+import SearchPage from './Components/SearchPage';
+import BookShelf from './Components/BookShelf';
+import { debounce } from "throttle-debounce";
 
-var ShelfEnum = Object.freeze({
-  'Currently Reading' : 'currentlyReading',
-  'Want to Read': 'wantToRead',
-  'Read' : 'read'})
+const currentlyReading = 'currentlyReading';
+const wantToRead = 'wantToRead';
+const read = 'read';
 
 class BooksApp extends React.Component {
 
-  state = {
-    books : [],
-    queryResult : []
+  constructor(props) {
+    super(props);
+    this.state = {
+      books : [],
+      queryResult : []
+    }
+    this.searchDebounced =  debounce(300, this.updateQuery)
   }
   
+  
+  performSearch = (newQuery) => {
+    this.searchDebounced(newQuery)
+  };
+
   componentWillMount(){
     BooksAPI.getAll().then((books) =>
-      books.map((book) => 
-        this.setState((state) => ({ books : state.books.concat([book])}))
-      )
+      this.setState({ books : books})
     );
   }
 
-  updateShelf = function(event,book) {
+  updateShelf = function(shelf,book) {
     // sometimes the book does't match with includes, because this we need to check according the ids.
-    this.state.books.map((b) => {
-      if(b.id === book.id){
-        book = b;
-      }
-    }) 
-    book.shelf = event.target.options[event.target.selectedIndex].value;
-    BooksAPI.update(book, book.shelf);
-    this.state.books.includes(book)? this.setState({ books : this.state.books}) : this.setState((state) => ({ books : state.books.concat([book])}))
+    this.state.books.map((b) => (b.id === book.id? book = b : false))
+    const updatedBook = {
+      ...book,
+      shelf
+    }
+    BooksAPI.update(updatedBook, shelf);
+    const updatedBooks = this.state.books.filter(b => b.id !== updatedBook.id).concat(updatedBook)
+    this.setState({ books : updatedBooks})
   }
 
   updateQuery = function(newQuery){
     let shelf = 'none';
-
     BooksAPI.search(newQuery).then((books) => {
       if(books){
         this.setState({ queryResult : []})
         books && books.length && books.map((book) => {
-          this.state.books.map((b) => {
+          this.state.books.forEach((b) => {
             if(b.id === book.id){
              return shelf = b.shelf
             }
           })
-          // Bug on the API found when type 'l' on the input, there is no image on the book
-          if(book.imageLinks){
-            this.setState((state) => { 
-              return {queryResult : state.queryResult.concat([<Book bookShelf={shelf} updateShelf={(e) => (this.updateShelf(e,book))} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 192, backgroundImage: `url(${book.imageLinks.thumbnail})`}}/>])}
-            }) 
+          let updatedBook = {
+            ...book,
+            shelf
           }
-          shelf = 'none';
+          this.setState((state) => { 
+             return {queryResult : state.queryResult.concat([updatedBook])}
+          })
+          return shelf = 'none';
         })
       }else{
         return this.setState(() => ({ queryResult : []}))
@@ -79,23 +87,14 @@ class BooksApp extends React.Component {
                 <input 
                   type="text" 
                   placeholder="Search by title or author"
-                  onChange= {(event) => this.updateQuery(event.target.value)}
+                  onChange= {(event) => this.performSearch(event.target.value)} 
                   />
               </div>
-              
             </div>
             <div className="search-books-results">
-              <div className="bookshelf-books">
-                <ol className="books-grid">
-                  {queryResult.filter((book) => (
-                    <li key={book.id}>
-                      {book}
-                    </li>
-                  )) }
-                </ol>
+              <SearchPage books={queryResult} updateShelf={(newShelf,book) => (this.updateShelf(newShelf,book))}/>
               </div>
             </div>
-          </div>
         )} />
         <Route exact path='/' render={() => (
           <div className="list-books">
@@ -106,39 +105,15 @@ class BooksApp extends React.Component {
               <div>
                 <div className="bookshelf">
                   <h2 className="bookshelf-title">Currently Reading</h2>
-                  <div className="bookshelf-books">
-                    <ol className="books-grid">
-                      {books.filter((book) => (book.shelf==='currentlyReading')).map((book) => (
-                            <li key={book.id}>
-                              <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
-                            </li>
-                          )) }
-                    </ol>
-                  </div>
+                  <BookShelf shelf={currentlyReading} books={books} updateShelf={(newShelf,book) => (this.updateShelf(newShelf,book))}/>
                 </div>
                 <div className="bookshelf">
                   <h2 className="bookshelf-title">Want to Read</h2>
-                  <div className="bookshelf-books">
-                  <ol className="books-grid">
-                    {books.filter((book) => (book.shelf==='wantToRead')).map((book) => (
-                          <li key={book.id}>
-                            <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
-                          </li>
-                        )) }
-                    </ol>
-                  </div>
+                  <BookShelf shelf={wantToRead} books={books} updateShelf={(newShelf,book) => (this.updateShelf(newShelf,book))}/>
                 </div>
                 <div className="bookshelf">
                   <h2 className="bookshelf-title">Read</h2>
-                  <div className="bookshelf-books">
-                  <ol className="books-grid">
-                    {books.filter((book) => (book.shelf==='read')).map((book) => (
-                          <li key={book.id}>
-                            <Book updateShelf={(e) => (this.updateShelf(e,book))} bookShelf={book.shelf} bookAuthors={book.authors} bookTitle={book.title} style={{ width: 128, height: 193, backgroundImage: `url(${book.imageLinks.thumbnail})` }} />
-                          </li>
-                        )) }
-                    </ol>
-                  </div>
+                  <BookShelf shelf={read} books={books} updateShelf={(newShelf,book) => (this.updateShelf(newShelf,book))}/>
                 </div>
               </div>
             </div>
